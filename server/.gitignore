@@ -1,0 +1,4 @@
+node_modules
+.env
+# Customer leads (personal data) — never commit
+data/

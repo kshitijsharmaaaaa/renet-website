@@ -1,0 +1,37 @@
+# Render Blueprint for the RENET backend (API + Groq AI + test-ride leads).
+# Secrets are marked sync: false — Render asks for their values in the dashboard;
+# they are never stored in this file or in Git.
+services:
+  - type: web
+    name: renet-api
+    runtime: node
+    rootDir: server
+    # Starter is required for the persistent disk below (free instances lose
+    # files on every restart/deploy and sleep when idle).
+    plan: starter
+    region: singapore
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    disk:
+      name: renet-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: LEADS_FILE
+        value: /var/data/leads.jsonl
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: LEAD_WEBHOOK_URL
+        sync: false

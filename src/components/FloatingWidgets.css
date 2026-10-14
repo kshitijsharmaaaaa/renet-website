@@ -1,0 +1,560 @@
+/* =========================================
+   RENET — Floating WhatsApp + AI assistant
+========================================= */
+
+.renet-floating-widgets {
+  --widget-gap: clamp(14px, 2vw, 24px);
+  --widget-bottom: calc(var(--widget-gap) + env(safe-area-inset-bottom, 0px));
+  --widget-ink: #171815;
+  --widget-green: #79c52c;
+  --widget-cream: #f4f3ee;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ---------- WhatsApp (bottom-left) ---------- */
+
+.renet-whatsapp {
+  position: fixed;
+  left: calc(var(--widget-gap) + env(safe-area-inset-left, 0px));
+  bottom: var(--widget-bottom);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  padding: 0 20px 0 15px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: var(--widget-ink);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-decoration: none;
+  box-shadow: 0 14px 34px rgba(18, 22, 14, 0.28);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, opacity 0.25s ease, scale 0.2s ease;
+  animation: renetWidgetIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.2s backwards;
+}
+
+.renet-whatsapp:active,
+.renet-chat-toggle:active {
+  scale: 0.96;
+}
+
+.renet-whatsapp svg {
+  width: 24px;
+  height: 24px;
+  color: #25d366;
+  flex-shrink: 0;
+}
+
+.renet-whatsapp:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(18, 22, 14, 0.34);
+}
+
+/* ---------- Assistant toggle (bottom-right) ---------- */
+
+.renet-chat-toggle {
+  position: fixed;
+  right: calc(var(--widget-gap) + env(safe-area-inset-right, 0px));
+  bottom: var(--widget-bottom);
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  padding: 0 20px 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--widget-green);
+  color: var(--widget-ink);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 14px 34px rgba(80, 130, 30, 0.35);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, opacity 0.25s ease, scale 0.2s ease;
+  animation: renetWidgetIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.35s backwards;
+}
+
+.renet-chat-toggle:hover {
+  transform: translateY(-3px);
+}
+
+.renet-chat-toggle-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--widget-ink);
+  color: var(--widget-green);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* ---------- Chat panel ---------- */
+
+.renet-chat-panel {
+  position: fixed;
+  right: calc(var(--widget-gap) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--widget-bottom) + 68px);
+  z-index: 70;
+  width: min(390px, calc(100vw - 2 * var(--widget-gap)));
+  height: min(600px, calc(100dvh - 140px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 26px;
+  background: #11140f;
+  color: #eceee7;
+  box-shadow: 0 30px 70px rgba(10, 12, 8, 0.4);
+  transform-origin: bottom right;
+  /* Closed state — kept mounted so it can animate out */
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 16px;
+  scale: 0.96;
+  pointer-events: none;
+  transition:
+    opacity 0.28s ease,
+    translate 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    scale 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.45s;
+}
+
+.renet-chat-panel-open {
+  opacity: 1;
+  visibility: visible;
+  translate: 0 0;
+  scale: 1;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+/* Subtle one-time entrance for both floating buttons */
+@keyframes renetWidgetIn {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+    scale: 0.92;
+  }
+}
+
+.renet-chat-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.renet-chat-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9ca396;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+}
+
+.renet-chat-status {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6b7066;
+}
+
+.renet-chat-status-online {
+  background: var(--widget-green);
+  box-shadow: 0 0 10px var(--widget-green);
+}
+
+.renet-chat-status-offline {
+  background: #d0794a;
+}
+
+.renet-chat-header h2 {
+  margin: 8px 0 0;
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.8px;
+}
+
+.renet-chat-header h2 span {
+  color: var(--widget-green);
+}
+
+.renet-chat-close {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  background: transparent;
+  color: white;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.renet-chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.renet-chat-bubble {
+  max-width: 86%;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.renet-chat-bubble-assistant {
+  align-self: flex-start;
+  border-bottom-left-radius: 6px;
+  background: #1f241b;
+  color: #e3e7dd;
+}
+
+.renet-chat-bubble-user {
+  align-self: flex-end;
+  border-bottom-right-radius: 6px;
+  background: var(--widget-green);
+  color: var(--widget-ink);
+}
+
+.renet-chat-notice a {
+  color: var(--widget-green);
+}
+
+.renet-chat-typing {
+  align-self: flex-start;
+  display: flex;
+  gap: 5px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border-bottom-left-radius: 6px;
+  background: #1f241b;
+}
+
+.renet-chat-typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9ca396;
+  animation: renetTyping 1.2s infinite ease-in-out;
+}
+
+.renet-chat-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.renet-chat-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes renetTyping {
+  0%, 60%, 100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+.renet-chat-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(208, 121, 74, 0.4);
+  border-radius: 14px;
+  background: rgba(208, 121, 74, 0.12);
+  color: #f0c3a8;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.renet-chat-error button {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #f0c3a8;
+  color: var(--widget-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.renet-chat-suggestions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.renet-chat-suggestions button {
+  padding: 9px 13px;
+  border: 1px solid rgba(121, 197, 44, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: #cfe7b5;
+  font-size: 12.5px;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.renet-chat-suggestions button:hover {
+  background: rgba(121, 197, 44, 0.12);
+}
+
+.renet-chat-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.renet-chat-form input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: #1a1e16;
+  color: white;
+  /* 16px stops iOS Safari zooming in on focus */
+  font-size: 16px;
+}
+
+.renet-chat-form input::placeholder {
+  color: #7d8377;
+}
+
+.renet-chat-form button {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--widget-green);
+  color: var(--widget-ink);
+  font-size: 18px;
+  font-weight: 700;
+  transition: opacity 0.2s ease;
+}
+
+.renet-chat-form button:disabled,
+.renet-chat-form input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.renet-chat-disclaimer {
+  margin: 0;
+  padding: 0 18px 14px;
+  color: #6f756a;
+  font-size: 10.5px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.renet-chat-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Advisor: quick replies + recommendation actions ---------- */
+
+.renet-chat-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.renet-chat-row.is-user {
+  align-items: flex-end;
+}
+
+.renet-chat-row .renet-chat-bubble {
+  max-width: 86%;
+}
+
+.renet-chat-quick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.renet-chat-quick button {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid rgba(121, 197, 44, 0.55);
+  border-radius: 999px;
+  background: rgba(121, 197, 44, 0.1);
+  color: #dff0cc;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.renet-chat-quick button:hover {
+  background: rgba(121, 197, 44, 0.22);
+}
+
+.renet-chat-quick button.is-quiet {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: #9ca396;
+}
+
+.renet-chat-suggestions button.is-advisor {
+  border-color: var(--widget-green);
+  background: var(--widget-green);
+  color: var(--widget-ink);
+  font-weight: 700;
+}
+
+.renet-chat-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.renet-chat-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: #171a14;
+}
+
+.renet-chat-action-group > span {
+  width: 100%;
+  margin: 0 0 2px 4px;
+  color: var(--widget-green);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+
+.renet-chat-action-group a,
+.renet-chat-action-group button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: transparent;
+  color: #e3e7dd;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.renet-chat-action-group .is-primary {
+  border-color: var(--widget-green);
+  background: var(--widget-green);
+  color: var(--widget-ink);
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 640px) {
+  .renet-whatsapp,
+  .renet-chat-toggle {
+    height: 52px;
+  }
+
+  /* Icon-only WhatsApp keeps the bottom edge clear on small screens */
+  .renet-whatsapp {
+    width: 52px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .renet-whatsapp-label {
+    display: none;
+  }
+
+  .renet-whatsapp svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .renet-whatsapp-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .renet-chat-toggle {
+    padding-right: 16px;
+  }
+
+  /* Bottom sheet */
+  .renet-chat-panel {
+    right: 8px;
+    left: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    height: min(78dvh, 640px);
+    border-radius: 24px;
+  }
+
+  .renet-chat-toggle-open {
+    opacity: 0;
+    scale: 0.9;
+    pointer-events: none;
+  }
+
+  .renet-chat-panel {
+    transform-origin: bottom center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .renet-whatsapp,
+  .renet-chat-toggle,
+  .renet-chat-typing span {
+    animation: none;
+  }
+
+  .renet-whatsapp,
+  .renet-chat-toggle,
+  .renet-chat-panel {
+    transition: none;
+    translate: none;
+    scale: none;
+  }
+}

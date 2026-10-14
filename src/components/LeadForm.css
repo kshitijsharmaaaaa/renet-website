@@ -1,0 +1,309 @@
+/* =========================================
+   RENET — test ride / call-back form
+   Light card designed to sit on dark sections.
+========================================= */
+
+.lead-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 28px;
+  background: #f7f6f2;
+  color: #171815;
+  font-family: 'DM Sans', sans-serif;
+  text-align: left;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.28);
+}
+
+.lf-type {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #e9e8e1;
+}
+
+.lf-type button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #5d6057;
+  font-size: 13.5px;
+  font-weight: 700;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.lf-type button.is-active {
+  background: #fff;
+  color: #171815;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.lf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.lf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.lf-field > span:first-child,
+.lf-methods legend {
+  color: #4b4e46;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.lf-field input,
+.lf-field select,
+.lf-field textarea {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 16px;
+  border: 1px solid #d9d8cf;
+  border-radius: 14px;
+  background: #fff;
+  color: #171815;
+  /* 16px prevents iOS zoom on focus */
+  font-size: 16px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.lf-field textarea {
+  min-height: 92px;
+  padding: 14px 16px;
+  resize: vertical;
+}
+
+.lf-field input:focus,
+.lf-field select:focus,
+.lf-field textarea:focus {
+  border-color: #79c52c;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(121, 197, 44, 0.2);
+}
+
+.lf-field [aria-invalid="true"],
+.lf-consent input[aria-invalid="true"] {
+  border-color: #c4532b;
+  box-shadow: 0 0 0 3px rgba(196, 83, 43, 0.12);
+}
+
+.lf-error {
+  color: #b2451f;
+  font-size: 13px;
+}
+
+.lf-methods {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.lf-methods legend {
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.lf-methods > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lf-methods label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #d9d8cf;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.lf-methods label.is-active {
+  border-color: #79c52c;
+  background: rgba(121, 197, 44, 0.12);
+}
+
+.lf-methods input {
+  accent-color: #5a9a1c;
+}
+
+.lf-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #4b4e46;
+  font-size: 13.5px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.lf-consent input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  accent-color: #5a9a1c;
+}
+
+.lf-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.lf-alert {
+  padding: 14px 16px;
+  border: 1px solid rgba(196, 83, 43, 0.35);
+  border-radius: 14px;
+  background: rgba(196, 83, 43, 0.08);
+  color: #7d3115;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.lf-alert p {
+  margin: 0;
+}
+
+.lf-alert p + p {
+  margin-top: 6px;
+}
+
+.lf-alert a {
+  color: #171815;
+  font-weight: 700;
+}
+
+.lf-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 54px;
+  border: 0;
+  border-radius: 999px;
+  background: #79c52c;
+  color: #0d0e0c;
+  font-size: 15px;
+  font-weight: 700;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.3s ease,
+    translate 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    scale 0.2s ease;
+}
+
+.lf-submit:hover:not(:disabled) {
+  background: #8fd844;
+  box-shadow: 0 12px 30px rgba(121, 197, 44, 0.3);
+  translate: 0 -1px;
+}
+
+.lf-submit:active:not(:disabled) {
+  scale: 0.98;
+}
+
+.lf-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.lf-note {
+  margin: -6px 0 0;
+  color: #6f7268;
+  font-size: 12.5px;
+  text-align: center;
+}
+
+/* Success */
+.lf-success {
+  align-items: center;
+  padding-block: 48px;
+  text-align: center;
+}
+
+.lf-success-icon {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  place-items: center;
+  border-radius: 50%;
+  background: #79c52c;
+  color: #0d0e0c;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.lf-success h3 {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.lf-success p {
+  max-width: 380px;
+  margin: 0;
+  color: #4b4e46;
+  line-height: 1.6;
+}
+
+.lf-reference {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+}
+
+.lf-secondary {
+  min-height: 46px;
+  padding: 0 22px;
+  border: 1px solid #c9c8bf;
+  border-radius: 999px;
+  background: transparent;
+  color: #171815;
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .lf-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lf-type button {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lead-form * {
+    transition-duration: 0.01ms !important;
+  }
+}

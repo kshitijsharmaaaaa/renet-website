@@ -1,0 +1,23 @@
+{
+  "name": "renet-assistant-api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env index.js",
+    "dev": "node --watch --env-file-if-exists=.env index.js",
+    "test": "node --test test/*.test.js",
+    "loadtest": "node scripts/loadtest.mjs"
+  },
+  "engines": {
+    "node": ">=22.9"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "express": "^5.3.0",
+    "groq-sdk": "^1.6.0"
+  },
+  "devDependencies": {
+    "autocannon": "^8.0.0"
+  }
+}
