@@ -140,15 +140,26 @@ export default function ProductPage() {
   */
   const pageColour = D8_COLOURS.find((colour) => colour.modelSlug === modelId);
   const requested = D8_COLOURS.find((colour) => colour.id === searchParams.get("colour"));
-  const colour = requested && (!requested.modelSlug || requested.modelSlug === modelId) ? requested : pageColour;
-  const showsModelPhotos = colour.modelSlug === modelId;
-  const colourPhoto = !showsModelPhotos && colour.image ? colour.image : null;
+  const validHere = (option) =>
+    option.modelSlug ? option.modelSlug === modelId : option.preview ? option.preview.base === modelId : true;
+  const colour = requested && validHere(requested) ? requested : pageColour;
+  // How the selected colour is shown: model photos | digital preview | supplied photo | pending
+  const mode =
+    colour.modelSlug === modelId ? "model" : colour.preview ? "preview" : colour.image ? "photo" : "pending";
+  const showsModelPhotos = mode === "model";
+  const isPreview = mode === "preview";
   const colourIndex = D8_COLOURS.indexOf(colour) + 1;
+  const previewColours = D8_COLOURS.filter((option) => option.preview?.base === modelId);
+  // Gallery view with its photo swapped for the selected colour preview.
+  const viewFor = (view) => (isPreview && view.src === model.image ? { ...view, src: colour.preview.image } : view);
 
   const selectColour = (next) => {
     if (next.modelSlug) {
       // White / Black have their own pages with authentic galleries.
       navigate(`/scooters/${next.modelSlug}`, { replace: next.modelSlug === modelId, state: { keepScroll: true } });
+    } else if (next.preview) {
+      // Previews are recoloured from the D-8 White photo, so they live on that page.
+      navigate(`/scooters/${next.preview.base}?colour=${next.id}`, { replace: next.preview.base === modelId, state: { keepScroll: true } });
     } else {
       navigate(`/scooters/${modelId}?colour=${next.id}`, { replace: true, state: { keepScroll: true } });
     }
@@ -186,6 +197,14 @@ export default function ProductPage() {
               fetchPriority={slug === modelId ? "high" : "low"}
             />
           ))}
+          {isPreview && (
+            <img
+              key={colour.id}
+              {...responsiveImage(colour.preview.image, "(max-width: 760px) 100vw, 74vw")}
+              alt=""
+              className="pdp-hero-image is-active is-preview"
+            />
+          )}
         </div>
 
         <div className="pdp-hero-copy">
@@ -195,7 +214,7 @@ export default function ProductPage() {
 
           <h1 key={modelId} className="pdp-hero-title">
             <span className="pdp-line">Meet the</span>{" "}
-            <span className="pdp-line pdp-line-accent">{model.name}.</span>
+            <span className="pdp-line pdp-line-accent">{isPreview ? `D-8 ${colour.name}` : model.name}.</span>
           </h1>
 
           <p className="pdp-hero-tagline pdp-enter" style={{ "--enter-delay": "0.55s" }}>
@@ -217,7 +236,7 @@ export default function ProductPage() {
       <section className="pdp-glance" aria-label="At a glance">
         {[
           ["D-8", "RENET model"],
-          [model.light, "Light signature"],
+          [isPreview ? "To be confirmed" : model.light, "Light signature"],
           [colour.name, "Selected colour"],
           ["India", "Electric mobility"],
         ].map(([value, label], index) => (
@@ -253,6 +272,24 @@ export default function ProductPage() {
                 );
               })}
 
+              {/* Digital colour previews: every gallery view, recoloured (mounted so switching is instant) */}
+              {previewColours.flatMap((option) =>
+                model.gallery
+                  .filter((view) => view.src === model.image)
+                  .map((view) => {
+                    const active = isPreview && option.id === colour.id && view.id === activeView.id;
+                    return (
+                      <ShotImage
+                        key={`preview-${option.id}-${view.id}`}
+                        view={{ ...view, src: option.preview.image }}
+                        alt={active ? `RENET D-8 in ${option.name} (digital colour preview) — ${view.label}` : ""}
+                        className={active ? "is-active" : ""}
+                        loading="lazy"
+                      />
+                    );
+                  }),
+              )}
+
               {/* Authentic photos supplied for colours without their own page */}
               {D8_COLOURS.filter((option) => option.image && !option.modelSlug).map((option) => (
                 <ShotImage
@@ -266,11 +303,11 @@ export default function ProductPage() {
 
               {/* No authentic photo yet: say so — never show another colour's scooter */}
               <div
-                className={!showsModelPhotos && !colourPhoto ? "pdp-colour-pending is-active" : "pdp-colour-pending"}
+                className={mode === "pending" ? "pdp-colour-pending is-active" : "pdp-colour-pending"}
                 style={{ "--swatch": colour.swatch }}
-                role={!showsModelPhotos && !colourPhoto ? "img" : undefined}
-                aria-label={!showsModelPhotos && !colourPhoto ? `${colour.name}: official photo coming soon` : undefined}
-                aria-hidden={showsModelPhotos || Boolean(colourPhoto)}
+                role={mode === "pending" ? "img" : undefined}
+                aria-label={mode === "pending" ? `${colour.name}: official photo coming soon` : undefined}
+                aria-hidden={mode !== "pending"}
               >
                 <span className="pdp-colour-pending-dot" />
                 <strong>{colour.name}</strong>
@@ -278,11 +315,16 @@ export default function ProductPage() {
               </div>
 
               {/* The "coming soon" panel already names the colour */}
-              {(showsModelPhotos || colourPhoto) && (
+              {mode !== "pending" && (
                 <span className="pdp-stage-label">
-                  {showsModelPhotos ? `${model.name} · ${activeView.label}` : `RENET D-8 · ${colour.name}`}
+                  {showsModelPhotos
+                    ? `${model.name} · ${activeView.label}`
+                    : isPreview
+                      ? `D-8 ${colour.name} · ${activeView.label}`
+                      : `RENET D-8 · ${colour.name}`}
                 </span>
               )}
+              {isPreview && <span className="pdp-preview-badge">Digital colour preview</span>}
             </div>
 
             <div className="pdp-thumbs" role="group" aria-label="Gallery views">
@@ -290,16 +332,16 @@ export default function ProductPage() {
                 <button
                   type="button"
                   key={view.id}
-                  className={showsModelPhotos && view.id === activeView.id ? "pdp-thumb is-active" : "pdp-thumb"}
-                  aria-pressed={showsModelPhotos && view.id === activeView.id}
-                  aria-label={`${model.name} — ${view.label}`}
+                  className={(showsModelPhotos || isPreview) && view.id === activeView.id ? "pdp-thumb is-active" : "pdp-thumb"}
+                  aria-pressed={(showsModelPhotos || isPreview) && view.id === activeView.id}
+                  aria-label={`${isPreview ? `D-8 ${colour.name} (preview)` : model.name} — ${view.label}`}
                   onClick={() => {
                     setViewByModel((current) => ({ ...current, [modelId]: view.id }));
-                    if (!showsModelPhotos) selectColour(pageColour);
+                    if (!showsModelPhotos && !isPreview) selectColour(pageColour);
                   }}
                 >
                   <span className="pdp-thumb-frame">
-                    <ShotImage view={view} alt="" loading="lazy" vw={16} />
+                    <ShotImage view={viewFor(view)} alt="" loading="lazy" vw={16} />
                   </span>
                   <span className="pdp-thumb-label">{view.label}</span>
                 </button>
@@ -313,7 +355,11 @@ export default function ProductPage() {
             </p>
             <h3 aria-live="polite">{showsModelPhotos ? model.name : `D-8 ${colour.name}`}</h3>
             <p className="pdp-finish-category">
-              {showsModelPhotos ? model.category : "Electric scooter · details to be confirmed"}
+              {showsModelPhotos
+                ? model.category
+                : isPreview
+                  ? "Digital colour preview · details to be confirmed"
+                  : "Electric scooter · details to be confirmed"}
             </p>
 
             <ColourSelector colours={D8_COLOURS} selectedId={colour.id} onSelect={selectColour} />
@@ -321,7 +367,9 @@ export default function ProductPage() {
             <p className="pdp-finish-copy">
               {showsModelPhotos
                 ? model.description
-                : `The RENET D-8 in ${colour.name}. Official photos of this colour are coming soon — the RENET team can confirm availability and details.`}
+                : isPreview
+                  ? `A digital preview of the RENET D-8 in ${colour.name}, recoloured from the official D-8 White photo. The actual paint shade, finish and details may differ — the RENET team can confirm availability and show you the real colour.`
+                  : `The RENET D-8 in ${colour.name}. Official photos of this colour are coming soon — the RENET team can confirm availability and details.`}
             </p>
             <p className="pdp-finish-note">Availability of each colour is confirmed by RENET.</p>
 

@@ -58,7 +58,7 @@ The D-8 is offered in two designs on the website. Both are electric scooters.
 ### Colours
 
 - The D-8 is shown on the website in five colours: White, Grey, Black, Royal Blue and Cherry Red. Customers choose a colour on the product page; enquiries include the chosen colour.
-- Official photos are published for White and Black only. Photos of Grey, Royal Blue and Cherry Red are "coming soon".
+- Official photos are published for White and Black only. Grey, Royal Blue and Cherry Red are shown as "digital colour previews": the official D-8 White photo with its body panels digitally recoloured. They are not factory photos, and the real paint shade and finish may differ.
 - The light signature (single or double light) and any other details of the Grey, Royal Blue and Cherry Red versions have NOT been confirmed — tell customers to confirm with the RENET team. Availability of every colour is confirmed by RENET.
 
 ### Difference between the two designs (as stated on the website)
