@@ -78,3 +78,10 @@ test("a failed write rejects the save (never reported as stored)", async () => {
   const { lead } = validateLead(valid);
   await assert.rejects(store.save(lead));
 });
+
+test("colour is optional and must be one of the five D-8 colours", () => {
+  assert.equal(validateLead(valid).lead.colour, null);
+  assert.equal(validateLead({ ...valid, colour: "Royal Blue" }).lead.colour, "Royal Blue");
+  assert.ok(validateLead({ ...valid, colour: "Purple" }).errors.colour);
+  assert.match(leadsToCsv([{ id: "1", colour: "Cherry Red" }]).split("\n")[0], /"?colour"?/);
+});

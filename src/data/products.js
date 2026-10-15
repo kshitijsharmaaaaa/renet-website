@@ -59,6 +59,27 @@ const products = {
 
 export const productOrder = ["d8-white", "d8-black"];
 
+/*
+  RENET D-8 colour options (client requirement: five colours).
+
+  Each colour shows ONLY an authentic photo of that colour:
+  - modelSlug → the colour has its own product page + photo gallery.
+  - image     → an authentic photo of the scooter in this colour, e.g.
+                "/renet-d8-royal-blue.png" (put the file in /public and run
+                `npm run images` to create the optimised versions).
+  - neither   → a clearly labelled "photo coming soon" panel is shown.
+                Never point a colour at a different colour's photo.
+
+  Missing authentic photos (to be supplied by RENET): Grey, Royal Blue, Cherry Red.
+*/
+export const D8_COLOURS = [
+  { id: "white", name: "White", swatch: "#f2f2ee", modelSlug: "d8-white" },
+  { id: "grey", name: "Grey", swatch: "#8a8e8f", image: null },
+  { id: "black", name: "Black", swatch: "#151614", modelSlug: "d8-black" },
+  { id: "royal-blue", name: "Royal Blue", swatch: "#1d3fa6", image: null },
+  { id: "cherry-red", name: "Cherry Red", swatch: "#9e1b32", image: null },
+];
+
 // Shown as "Awaiting official confirmation" — matches the live website.
 export const pendingSpecs = [
   { group: "Performance", label: "Certified range" },
@@ -89,7 +110,7 @@ export const faqs = [
   {
     question: "Which colours are available?",
     answer:
-      "The website currently shows two designs: D-8 White and D-8 Black. Availability of each design should be confirmed with RENET.",
+      "The D-8 is shown in five colours: White, Grey, Black, Royal Blue and Cherry Red. Official photos are available for White and Black so far; photos of the other colours are coming soon. Availability of each colour should be confirmed with RENET.",
   },
   {
     question: "How do I make an enquiry?",

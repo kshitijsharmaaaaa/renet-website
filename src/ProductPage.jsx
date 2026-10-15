@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import products, { faqs, pendingSpecs, productOrder } from "./data/products";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import products, { D8_COLOURS, faqs, pendingSpecs, productOrder } from "./data/products";
 import { ENQUIRY_EMAIL, emailUrl, enquiryLink } from "./lib/enquiry";
 import useHeroParallax from "./hooks/useHeroParallax";
 import { responsiveImage } from "./lib/images";
@@ -66,10 +66,51 @@ function FaqItem({ item, open, onToggle }) {
   );
 }
 
+// Five-colour selector: a radio group (arrow keys move and select, like native radios).
+function ColourSelector({ colours, selectedId, onSelect }) {
+  const refs = useRef({});
+  const onKeyDown = (event) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    const index = colours.findIndex((colour) => colour.id === selectedId);
+    let next = null;
+    if (step) next = colours[(index + step + colours.length) % colours.length];
+    if (event.key === "Home") next = colours[0];
+    if (event.key === "End") next = colours.at(-1);
+    if (!next) return;
+    event.preventDefault();
+    onSelect(next);
+    refs.current[next.id]?.focus();
+  };
+
+  return (
+    <div className="pdp-colours" role="radiogroup" aria-label="Choose a colour" onKeyDown={onKeyDown}>
+      {colours.map((colour) => {
+        const selected = colour.id === selectedId;
+        return (
+          <button
+            type="button"
+            key={colour.id}
+            ref={(element) => (refs.current[colour.id] = element)}
+            role="radio"
+            aria-checked={selected}
+            tabIndex={selected ? 0 : -1}
+            className={selected ? "pdp-colour is-active" : "pdp-colour"}
+            onClick={() => onSelect(colour)}
+          >
+            <span className="pdp-colour-dot" style={{ "--swatch": colour.swatch }} aria-hidden="true" />
+            <span className="pdp-colour-name">{colour.name}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ProductPage() {
   const { modelId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const heroRef = useRef(null);
   const [viewByModel, setViewByModel] = useState({});
   const [openFaq, setOpenFaq] = useState(0);
@@ -92,17 +133,35 @@ export default function ProductPage() {
     );
   }
 
-  const enquiry = enquiryLink(model.name);
+  /*
+    Selected colour: from ?colour= (so it survives reloads and other controls),
+    otherwise the colour of this model page. A colour that has its own model
+    page is only valid on that page.
+  */
+  const pageColour = D8_COLOURS.find((colour) => colour.modelSlug === modelId);
+  const requested = D8_COLOURS.find((colour) => colour.id === searchParams.get("colour"));
+  const colour = requested && (!requested.modelSlug || requested.modelSlug === modelId) ? requested : pageColour;
+  const showsModelPhotos = colour.modelSlug === modelId;
+  const colourPhoto = !showsModelPhotos && colour.image ? colour.image : null;
+  const colourIndex = D8_COLOURS.indexOf(colour) + 1;
+
+  const selectColour = (next) => {
+    if (next.modelSlug) {
+      // White / Black have their own pages with authentic galleries.
+      navigate(`/scooters/${next.modelSlug}`, { replace: next.modelSlug === modelId, state: { keepScroll: true } });
+    } else {
+      navigate(`/scooters/${modelId}?colour=${next.id}`, { replace: true, state: { keepScroll: true } });
+    }
+  };
+
+  // Every enquiry on this page carries the model and the selected colour.
+  const enquiryName = `RENET D-8 (colour: ${colour.name})`;
+  const enquiry = enquiryLink(enquiryName);
   const enquireLabel = enquiry.channel === "whatsapp" ? "Enquire on WhatsApp" : "Enquire now";
   const otherSlug = productOrder.find((slug) => slug !== modelId);
   const otherModel = products[otherSlug];
   const activeViewId = viewByModel[modelId] ?? model.gallery[0].id;
   const activeView = model.gallery.find((view) => view.id === activeViewId) ?? model.gallery[0];
-  const finishIndex = productOrder.indexOf(modelId) + 1;
-
-  const switchModel = (slug) => {
-    if (slug !== modelId) navigate(`/scooters/${slug}`, { state: { keepScroll: true } });
-  };
 
   // Every view of every model stays mounted so finish and view changes crossfade.
   const stageLayers = productOrder.flatMap((slug) =>
@@ -112,7 +171,7 @@ export default function ProductPage() {
   return (
     <main className={`pdp pdp-${model.color}`}>
       {/* SHARED HEADER — product sections + model-specific enquiry */}
-      <SiteHeader links={PRODUCT_NAV} model={model.name} />
+      <SiteHeader links={PRODUCT_NAV} model={enquiryName} />
 
       {/* 1 — CINEMATIC HERO */}
       <section className="pdp-hero" ref={heroRef}>
@@ -159,7 +218,7 @@ export default function ProductPage() {
         {[
           ["D-8", "RENET model"],
           [model.light, "Light signature"],
-          [model.shortName, "Selected design"],
+          [colour.name, "Selected colour"],
           ["India", "Electric mobility"],
         ].map(([value, label], index) => (
           <div key={label} data-reveal style={{ "--reveal-delay": `${index * 80}ms` }}>
@@ -174,25 +233,56 @@ export default function ProductPage() {
         <div className="pdp-section-head" data-reveal>
           <p className="pdp-kicker">Gallery</p>
           <h2>
-            Look closer at the <span>{model.name}.</span>
+            Look closer at the <span>{showsModelPhotos ? model.name : `D-8 in ${colour.name}`}.</span>
           </h2>
         </div>
 
         <div className="pdp-gallery-layout">
           <div className="pdp-gallery-main" data-reveal="scale">
             <div className="pdp-stage">
-              {stageLayers.map(({ slug, view, key }) => (
+              {stageLayers.map(({ slug, view, key }) => {
+                const active = showsModelPhotos && slug === modelId && view.id === activeView.id;
+                return (
+                  <ShotImage
+                    key={key}
+                    view={view}
+                    alt={active ? `${products[slug].name} — ${view.label}` : ""}
+                    className={active ? "is-active" : ""}
+                    loading={slug === modelId ? "eager" : "lazy"}
+                  />
+                );
+              })}
+
+              {/* Authentic photos supplied for colours without their own page */}
+              {D8_COLOURS.filter((option) => option.image && !option.modelSlug).map((option) => (
                 <ShotImage
-                  key={key}
-                  view={view}
-                  alt={slug === modelId && view.id === activeView.id ? `${products[slug].name} — ${view.label}` : ""}
-                  className={slug === modelId && view.id === activeView.id ? "is-active" : ""}
-                  loading={slug === modelId ? "eager" : "lazy"}
+                  key={`colour-${option.id}`}
+                  view={{ src: option.image, focus: "50% 50%", zoom: 1 }}
+                  alt={option.id === colour.id ? `RENET D-8 in ${option.name}` : ""}
+                  className={option.id === colour.id ? "is-active" : ""}
+                  loading="lazy"
                 />
               ))}
-              <span className="pdp-stage-label">
-                {model.name} · {activeView.label}
-              </span>
+
+              {/* No authentic photo yet: say so — never show another colour's scooter */}
+              <div
+                className={!showsModelPhotos && !colourPhoto ? "pdp-colour-pending is-active" : "pdp-colour-pending"}
+                style={{ "--swatch": colour.swatch }}
+                role={!showsModelPhotos && !colourPhoto ? "img" : undefined}
+                aria-label={!showsModelPhotos && !colourPhoto ? `${colour.name}: official photo coming soon` : undefined}
+                aria-hidden={showsModelPhotos || Boolean(colourPhoto)}
+              >
+                <span className="pdp-colour-pending-dot" />
+                <strong>{colour.name}</strong>
+                <span>Official photo of the D-8 in {colour.name} coming soon</span>
+              </div>
+
+              {/* The "coming soon" panel already names the colour */}
+              {(showsModelPhotos || colourPhoto) && (
+                <span className="pdp-stage-label">
+                  {showsModelPhotos ? `${model.name} · ${activeView.label}` : `RENET D-8 · ${colour.name}`}
+                </span>
+              )}
             </div>
 
             <div className="pdp-thumbs" role="group" aria-label="Gallery views">
@@ -200,9 +290,13 @@ export default function ProductPage() {
                 <button
                   type="button"
                   key={view.id}
-                  className={view.id === activeView.id ? "pdp-thumb is-active" : "pdp-thumb"}
-                  aria-pressed={view.id === activeView.id}
-                  onClick={() => setViewByModel((current) => ({ ...current, [modelId]: view.id }))}
+                  className={showsModelPhotos && view.id === activeView.id ? "pdp-thumb is-active" : "pdp-thumb"}
+                  aria-pressed={showsModelPhotos && view.id === activeView.id}
+                  aria-label={`${model.name} — ${view.label}`}
+                  onClick={() => {
+                    setViewByModel((current) => ({ ...current, [modelId]: view.id }));
+                    if (!showsModelPhotos) selectColour(pageColour);
+                  }}
                 >
                   <span className="pdp-thumb-frame">
                     <ShotImage view={view} alt="" loading="lazy" vw={16} />
@@ -215,31 +309,24 @@ export default function ProductPage() {
 
           <aside className="pdp-finish" data-reveal style={{ "--reveal-delay": "120ms" }}>
             <p className="pdp-finish-index">
-              Finish · 0{finishIndex} / 0{productOrder.length}
+              Colour · 0{colourIndex} / 0{D8_COLOURS.length}
             </p>
-            <h3>{model.name}</h3>
-            <p className="pdp-finish-category">{model.category}</p>
+            <h3 aria-live="polite">{showsModelPhotos ? model.name : `D-8 ${colour.name}`}</h3>
+            <p className="pdp-finish-category">
+              {showsModelPhotos ? model.category : "Electric scooter · details to be confirmed"}
+            </p>
 
-            <div className="pdp-swatches" role="radiogroup" aria-label="Choose your design">
-              {productOrder.map((slug) => (
-                <button
-                  type="button"
-                  key={slug}
-                  role="radio"
-                  aria-checked={slug === modelId}
-                  aria-label={products[slug].name}
-                  className={slug === modelId ? "pdp-swatch is-active" : "pdp-swatch"}
-                  style={{ "--swatch": products[slug].swatch }}
-                  onClick={() => switchModel(slug)}
-                />
-              ))}
-            </div>
+            <ColourSelector colours={D8_COLOURS} selectedId={colour.id} onSelect={selectColour} />
 
-            <p className="pdp-finish-copy">{model.description}</p>
-            <p className="pdp-finish-note">Availability of each design is confirmed by RENET.</p>
+            <p className="pdp-finish-copy">
+              {showsModelPhotos
+                ? model.description
+                : `The RENET D-8 in ${colour.name}. Official photos of this colour are coming soon — the RENET team can confirm availability and details.`}
+            </p>
+            <p className="pdp-finish-note">Availability of each colour is confirmed by RENET.</p>
 
             <a className="pdp-btn pdp-btn-dark" {...enquiry.linkProps}>
-              Enquire about this design <span aria-hidden="true">↗</span>
+              Enquire about the D-8 in {colour.name} <span aria-hidden="true">↗</span>
             </a>
           </aside>
         </div>
@@ -441,7 +528,7 @@ export default function ProductPage() {
               {enquireLabel} <span aria-hidden="true">↗</span>
             </a>
             {enquiry.channel === "whatsapp" && (
-              <a className="pdp-btn pdp-btn-ghost" href={emailUrl(`${model.name} enquiry`)}>
+              <a className="pdp-btn pdp-btn-ghost" href={emailUrl(`${enquiryName} enquiry`)}>
                 Email {ENQUIRY_EMAIL}
               </a>
             )}
@@ -452,7 +539,7 @@ export default function ProductPage() {
         </div>
 
         <div className="pdp-lead" id="test-ride" data-reveal style={{ "--reveal-delay": "120ms" }}>
-          <LeadForm defaultModel={model.name} source={`product-${modelId}`} />
+          <LeadForm defaultModel={model.name} defaultColour={colour.name} source={`product-${modelId}`} />
         </div>
       </section>
 

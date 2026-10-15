@@ -2,9 +2,12 @@ import { useId, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { API_BASE } from "../lib/api";
 import { ENQUIRY_EMAIL, emailUrl, whatsAppUrl } from "../lib/enquiry";
+import { D8_COLOURS } from "../data/products";
 import "./LeadForm.css";
 
 const MODEL_OPTIONS = ["D-8 White", "D-8 Black", "Not sure yet"];
+const NO_COLOUR = "No preference";
+const COLOUR_OPTIONS = [NO_COLOUR, ...D8_COLOURS.map((colour) => colour.name)];
 const SLUG_TO_MODEL = { "d8-white": "D-8 White", "d8-black": "D-8 Black" };
 
 const CONTACT_METHODS = [
@@ -36,11 +39,12 @@ function validate(values) {
   With `syncWithUrl`, "?model=d8-black&form=test-ride" preselects the model —
   used by the scooter advisor and other "Book a test ride" links.
 */
-export default function LeadForm({ defaultModel = "Not sure yet", source = "website", syncWithUrl = false }) {
+export default function LeadForm({ defaultModel = "Not sure yet", defaultColour = NO_COLOUR, source = "website", syncWithUrl = false }) {
   const id = useId();
   const [searchParams] = useSearchParams();
   const [type, setType] = useState("test-ride");
   const [model, setModel] = useState(defaultModel);
+  const [colour, setColour] = useState(defaultColour);
   const [contactMethod, setContactMethod] = useState("call");
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
@@ -65,6 +69,12 @@ export default function LeadForm({ defaultModel = "Not sure yet", source = "webs
   if (defaultModel !== appliedDefault) {
     setAppliedDefault(defaultModel);
     setModel(defaultModel);
+  }
+  // …and the colour selected on the product page.
+  const [appliedColour, setAppliedColour] = useState(defaultColour);
+  if (defaultColour !== appliedColour) {
+    setAppliedColour(defaultColour);
+    setColour(defaultColour);
   }
 
   const update = (field) => (event) => {
@@ -95,6 +105,7 @@ export default function LeadForm({ defaultModel = "Not sure yet", source = "webs
         body: JSON.stringify({
           type,
           model,
+          colour: colour === NO_COLOUR ? undefined : colour,
           contactMethod,
           name: values.name,
           phone: values.phone,
@@ -135,7 +146,9 @@ export default function LeadForm({ defaultModel = "Not sure yet", source = "webs
       </span>
     ) : null;
 
-  const whatsApp = whatsAppUrl(`Hi RENET, I'd like to book a test ride${model !== "Not sure yet" ? ` of the ${model}` : ""}.`);
+  const whatsApp = whatsAppUrl(
+    `Hi RENET, I'd like to book a test ride${model !== "Not sure yet" ? ` of the ${model}` : ""}${colour !== NO_COLOUR ? ` (colour: ${colour})` : ""}.`,
+  );
 
   if (status === "success") {
     return (
@@ -207,6 +220,15 @@ export default function LeadForm({ defaultModel = "Not sure yet", source = "webs
           <span>Preferred model *</span>
           <select id={`${id}-model`} value={model} onChange={(event) => setModel(event.target.value)}>
             {MODEL_OPTIONS.map((option) => (
+              <option key={option}>{option}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="lf-field">
+          <span>Preferred colour</span>
+          <select id={`${id}-colour`} value={colour} onChange={(event) => setColour(event.target.value)}>
+            {COLOUR_OPTIONS.map((option) => (
               <option key={option}>{option}</option>
             ))}
           </select>

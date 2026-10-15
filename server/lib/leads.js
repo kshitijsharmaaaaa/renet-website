@@ -5,6 +5,8 @@ import path from "node:path";
 export const LEAD_TYPES = ["test-ride", "enquiry"];
 export const LEAD_MODELS = ["D-8 White", "D-8 Black", "Not sure yet"];
 export const CONTACT_METHODS = ["call", "whatsapp", "email"];
+// Keep in sync with D8_COLOURS in src/data/products.js.
+export const LEAD_COLOURS = ["White", "Grey", "Black", "Royal Blue", "Cherry Red"];
 
 const NAME_PATTERN = /^[\p{L}][\p{L}\p{M} .'-]{1,79}$/u;
 const CITY_PATTERN = /^[\p{L}][\p{L}\p{M} .,'()-]{1,59}$/u;
@@ -41,6 +43,9 @@ export function validateLead(body) {
   const model = clean(input.model);
   if (!LEAD_MODELS.includes(model)) errors.model = "Choose a scooter model.";
 
+  const colour = clean(input.colour);
+  if (colour && !LEAD_COLOURS.includes(colour)) errors.colour = "Choose a valid colour.";
+
   const contactMethod = clean(input.contactMethod);
   if (!CONTACT_METHODS.includes(contactMethod)) errors.contactMethod = "Choose how we should contact you.";
 
@@ -60,7 +65,7 @@ export function validateLead(body) {
 
   if (Object.keys(errors).length) return { errors };
   return {
-    lead: { type, name, phone, city, model, contactMethod, email: email || null, message: message || null, source: source || null },
+    lead: { type, name, phone, city, model, colour: colour || null, contactMethod, email: email || null, message: message || null, source: source || null },
   };
 }
 
@@ -149,7 +154,7 @@ export async function notifyWebhook(record, { url, secret, timeoutMs = 5000 }) {
   return { delivered: true };
 }
 
-const CSV_COLUMNS = ["id", "createdAt", "type", "name", "phone", "city", "model", "contactMethod", "email", "message", "source"];
+const CSV_COLUMNS = ["id", "createdAt", "type", "name", "phone", "city", "model", "colour", "contactMethod", "email", "message", "source"];
 
 // CSV export with protection against spreadsheet formula injection.
 export function leadsToCsv(records) {
