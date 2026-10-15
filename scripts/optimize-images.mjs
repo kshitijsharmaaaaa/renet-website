@@ -9,7 +9,7 @@
 import { mkdir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { COLOURS, recolour } from "./recolour.mjs";
+import { COLOURS, PREVIEWS_BY_BASE, recolour } from "./recolour.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const OUT = path.join(root, "src/assets/optimized");
@@ -37,8 +37,8 @@ for (const [name, { widths, quality }] of Object.entries(SOURCES)) {
 // Colour previews: the D-8 White and D-8 Black photos with only their painted
 // panels recoloured (see scripts/recolour.mjs). Named renet-d8-<base>-<colour>-<width>.webp.
 process.chdir(root);
-for (const base of ["white", "black"]) for (const [id, hex] of Object.entries(COLOURS)) {
-  const recoloured = await (await recolour(hex, base)).png().toBuffer();
+for (const [base, ids] of Object.entries(PREVIEWS_BY_BASE)) for (const id of ids) {
+  const recoloured = await (await recolour(COLOURS[id], base)).png().toBuffer();
   for (const width of SOURCES[`renet-d8-${base}`].widths) {
     const file = path.join(OUT, `renet-d8-${base}-${id}-${width}.webp`);
     const info = await sharp(recoloured).resize({ width }).webp({ quality: SOURCES[`renet-d8-${base}`].quality, effort: 6, smartSubsample: true }).toFile(file);

@@ -1667,3 +1667,14 @@
     animation: none;
   }
 }
+
+.pdp-other-design {
+  margin-top: 10px;
+}
+
+.pdp-other-design a {
+  color: var(--pdp-green-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

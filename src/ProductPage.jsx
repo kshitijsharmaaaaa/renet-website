@@ -176,8 +176,10 @@ export default function ProductPage() {
   */
   const pageColour = D8_COLOURS.find((colour) => colour.modelSlug === modelId);
   const requested = D8_COLOURS.find((colour) => colour.id === searchParams.get("colour"));
-  const validHere = (option) => (option.modelSlug ? option.modelSlug === modelId : true);
-  const colour = requested && validHere(requested) ? requested : pageColour;
+  // Every colour stays on THIS design, so the scooter's geometry never changes.
+  const colour = requested && requested.modelSlug !== modelId ? requested : pageColour;
+  // Real photo of this colour on the other design (offered as a link when pending).
+  const otherDesignPhoto = colour.modelSlug && colour.modelSlug !== modelId ? products[colour.modelSlug] : null;
   // Preview image of the selected colour on THIS design (single or double light).
   const previewImage = colour.previews?.[modelId] ?? null;
   // How the selected colour is shown: model photos | digital preview | supplied photo | pending
@@ -191,11 +193,11 @@ export default function ProductPage() {
   const viewFor = (view) => (isPreview && view.src === model.image ? { ...view, src: previewImage } : view);
 
   const selectColour = (next) => {
-    if (next.modelSlug) {
-      // White / Black have their own pages with authentic galleries.
-      navigate(`/scooters/${next.modelSlug}`, { replace: next.modelSlug === modelId, state: { keepScroll: true } });
+    if (next.modelSlug === modelId) {
+      // This design's own colour: its authentic photos.
+      navigate(`/scooters/${modelId}`, { replace: true, state: { keepScroll: true } });
     } else {
-      // Stay on the current design (single or double light) and show its preview.
+      // Any other colour stays on this design (single or double light).
       navigate(`/scooters/${modelId}?colour=${next.id}`, { replace: true, state: { keepScroll: true } });
     }
   };
@@ -357,7 +359,7 @@ export default function ProductPage() {
               >
                 <span className="pdp-colour-pending-dot" />
                 <strong>{colour.name}</strong>
-                <span>Official photo of the D-8 in {colour.name} coming soon</span>
+                <span>Official photo of the {model.light.toLowerCase()} D-8 in {colour.name} coming soon</span>
               </div>
               </div>
 
@@ -438,8 +440,15 @@ export default function ProductPage() {
                 ? model.description
                 : isPreview
                   ? `A digital preview of the ${model.light.toLowerCase()} D-8 in ${colour.name}, recoloured from the official ${model.name} photo. The actual paint shade, finish and painted areas may differ — the RENET team can confirm availability and show you the real colour.`
-                  : `The RENET D-8 in ${colour.name}. Official photos of this colour are coming soon — the RENET team can confirm availability and details.`}
+                  : `Official photos of the ${model.light.toLowerCase()} D-8 in ${colour.name} are coming soon — the RENET team can confirm availability and details.`}
             </p>
+            {mode === "pending" && otherDesignPhoto && (
+              <p className="pdp-finish-copy pdp-other-design">
+                <Link to={`/scooters/${otherDesignPhoto.slug}`}>
+                  See the real photo of the {otherDesignPhoto.name} ({otherDesignPhoto.light.toLowerCase()}) ↗
+                </Link>
+              </p>
+            )}
             <p className="pdp-finish-note">Availability of each colour is confirmed by RENET.</p>
 
             <a className="pdp-btn pdp-btn-primary pdp-colour-cta" {...enquiry.linkProps}>

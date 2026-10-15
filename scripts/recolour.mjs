@@ -79,9 +79,18 @@ export const PROFILES = {
 };
 
 export const COLOURS = {
+  black: "#141514",
   grey: "#7c8184",
   "royal-blue": "#1d3fa6",
   "cherry-red": "#9e1b32",
+};
+
+// Which colours are generated from which photo. Each design keeps its own
+// geometry (single vs double light). White is NOT generated from the Black
+// photo: tested, it came out flat silver-grey rather than white.
+export const PREVIEWS_BY_BASE = {
+  white: ["black", "grey", "royal-blue", "cherry-red"],
+  black: ["grey", "royal-blue", "cherry-red"],
 };
 
 const toLinear = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
@@ -257,6 +266,9 @@ export async function recolour(hex, profileName = "white") {
   if (profile.paint === "black") return recolourBlackPaint({ data, width, height, weight, target });
   // Brightness of the fully lit white panels in this photo (linear).
   const WHITE_REF = 0.92;
+  const targetLuma = 0.2126 * target[0] + 0.7152 * target[1] + 0.0722 * target[2];
+  // Dark paints show far less of the studio's blue cast (otherwise black turns navy).
+  const tintAmount = 0.35 * smoothstep(0.01, 0.12, targetLuma);
   const out = Buffer.from(data);
   for (let i = 0; i < width * height; i++) {
     const w = weight[i];
@@ -267,7 +279,7 @@ export async function recolour(hex, profileName = "white") {
     // glossy highlights stay white-ish
     const spec = smoothstep(0.97, 1.08, shade) * 0.55;
     for (let c = 0; c < 3; c++) {
-      const tint = (lin[c] - luma) * 0.35; // carry over the studio's cool reflections
+      const tint = (lin[c] - luma) * tintAmount; // carry over the studio's cool reflections
       const paint = Math.max(0, target[c] * shade + tint);
       const value = paint * (1 - spec) + lin[c] * spec;
       const mixed = lin[c] * (1 - w) + value * w;
@@ -283,6 +295,11 @@ export async function recolour(hex, profileName = "white") {
   brighter), with the original reflections added on top.
 */
 async function recolourBlackPaint({ data, width, height, weight, target }) {
+  const targetLuma = 0.2126 * target[0] + 0.7152 * target[1] + 0.0722 * target[2];
+  // Light paints (e.g. white) need deeper shading or they look flat and matte.
+  const light01 = smoothstep(0.2, 0.8, targetLuma);
+  const lightFloor = 0.2 - 0.08 * light01;
+  const lightRange = 0.7 + 0.35 * light01;
   const n = width * height;
   const masked = Buffer.alloc(n);
   const cover = Buffer.alloc(n);
@@ -301,7 +318,7 @@ async function recolourBlackPaint({ data, width, height, weight, target }) {
     const wide = coverWide[i] ? (avgWide[i] / coverWide[i]) ** 2 : 0;
     const near = coverNear[i] ? (avgNear[i] / coverNear[i]) ** 2 : 0;
     // large-scale light falloff + a little local modelling of the surface
-    const light = 0.2 + 0.7 * smoothstep(0.002, 0.07, wide) + 0.4 * smoothstep(0.004, 0.12, near);
+    const light = lightFloor + lightRange * smoothstep(0.002, 0.07, wide) + 0.4 * smoothstep(0.004, 0.12, near);
     for (let c = 0; c < 3; c++) {
       const lin = toLinear(data[i * 3 + c] / 255);
       const value = target[c] * Math.min(1.25, light) * (1 - Math.min(1, lin)) + lin; // reflections on top
