@@ -9,7 +9,7 @@
 import { mkdir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { COLOURS, SOURCE, recolour } from "./recolour.mjs";
+import { COLOURS, recolour } from "./recolour.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const OUT = path.join(root, "src/assets/optimized");
@@ -34,14 +34,14 @@ for (const [name, { widths, quality }] of Object.entries(SOURCES)) {
     console.log(`${path.basename(file).padEnd(36)} ${String(Math.round(info.size / 1024)).padStart(5)} KB`);
   }
 }
-// Colour previews: the D-8 White photo with only its painted panels recoloured
-// (see scripts/recolour.mjs). Named renet-d8-white-<colour>-<width>.webp.
+// Colour previews: the D-8 White and D-8 Black photos with only their painted
+// panels recoloured (see scripts/recolour.mjs). Named renet-d8-<base>-<colour>-<width>.webp.
 process.chdir(root);
-for (const [id, hex] of Object.entries(COLOURS)) {
-  const recoloured = await (await recolour(hex, SOURCE)).png().toBuffer();
-  for (const width of SOURCES["renet-d8-white"].widths) {
-    const file = path.join(OUT, `renet-d8-white-${id}-${width}.webp`);
-    const info = await sharp(recoloured).resize({ width }).webp({ quality: SOURCES["renet-d8-white"].quality, effort: 6, smartSubsample: true }).toFile(file);
+for (const base of ["white", "black"]) for (const [id, hex] of Object.entries(COLOURS)) {
+  const recoloured = await (await recolour(hex, base)).png().toBuffer();
+  for (const width of SOURCES[`renet-d8-${base}`].widths) {
+    const file = path.join(OUT, `renet-d8-${base}-${id}-${width}.webp`);
+    const info = await sharp(recoloured).resize({ width }).webp({ quality: SOURCES[`renet-d8-${base}`].quality, effort: 6, smartSubsample: true }).toFile(file);
     console.log(`${path.basename(file).padEnd(36)} ${String(Math.round(info.size / 1024)).padStart(5)} KB`);
   }
 }

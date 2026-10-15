@@ -140,27 +140,26 @@ export default function ProductPage() {
   */
   const pageColour = D8_COLOURS.find((colour) => colour.modelSlug === modelId);
   const requested = D8_COLOURS.find((colour) => colour.id === searchParams.get("colour"));
-  const validHere = (option) =>
-    option.modelSlug ? option.modelSlug === modelId : option.preview ? option.preview.base === modelId : true;
+  const validHere = (option) => (option.modelSlug ? option.modelSlug === modelId : true);
   const colour = requested && validHere(requested) ? requested : pageColour;
+  // Preview image of the selected colour on THIS design (single or double light).
+  const previewImage = colour.previews?.[modelId] ?? null;
   // How the selected colour is shown: model photos | digital preview | supplied photo | pending
   const mode =
-    colour.modelSlug === modelId ? "model" : colour.preview ? "preview" : colour.image ? "photo" : "pending";
+    colour.modelSlug === modelId ? "model" : previewImage ? "preview" : colour.image ? "photo" : "pending";
   const showsModelPhotos = mode === "model";
   const isPreview = mode === "preview";
   const colourIndex = D8_COLOURS.indexOf(colour) + 1;
-  const previewColours = D8_COLOURS.filter((option) => option.preview?.base === modelId);
+  const previewColours = D8_COLOURS.filter((option) => option.previews?.[modelId]);
   // Gallery view with its photo swapped for the selected colour preview.
-  const viewFor = (view) => (isPreview && view.src === model.image ? { ...view, src: colour.preview.image } : view);
+  const viewFor = (view) => (isPreview && view.src === model.image ? { ...view, src: previewImage } : view);
 
   const selectColour = (next) => {
     if (next.modelSlug) {
       // White / Black have their own pages with authentic galleries.
       navigate(`/scooters/${next.modelSlug}`, { replace: next.modelSlug === modelId, state: { keepScroll: true } });
-    } else if (next.preview) {
-      // Previews are recoloured from the D-8 White photo, so they live on that page.
-      navigate(`/scooters/${next.preview.base}?colour=${next.id}`, { replace: next.preview.base === modelId, state: { keepScroll: true } });
     } else {
+      // Stay on the current design (single or double light) and show its preview.
       navigate(`/scooters/${modelId}?colour=${next.id}`, { replace: true, state: { keepScroll: true } });
     }
   };
@@ -171,8 +170,10 @@ export default function ProductPage() {
   const enquireLabel = enquiry.channel === "whatsapp" ? "Enquire on WhatsApp" : "Enquire now";
   const otherSlug = productOrder.find((slug) => slug !== modelId);
   const otherModel = products[otherSlug];
-  const activeViewId = viewByModel[modelId] ?? model.gallery[0].id;
-  const activeView = model.gallery.find((view) => view.id === activeViewId) ?? model.gallery[0];
+  // Previews exist only for views of the main studio photo (not e.g. the night close-up).
+  const galleryViews = isPreview ? model.gallery.filter((view) => view.src === model.image) : model.gallery;
+  const activeViewId = viewByModel[modelId] ?? galleryViews[0].id;
+  const activeView = galleryViews.find((view) => view.id === activeViewId) ?? galleryViews[0];
 
   // Every view of every model stays mounted so finish and view changes crossfade.
   const stageLayers = productOrder.flatMap((slug) =>
@@ -200,7 +201,7 @@ export default function ProductPage() {
           {isPreview && (
             <img
               key={colour.id}
-              {...responsiveImage(colour.preview.image, "(max-width: 760px) 100vw, 74vw")}
+              {...responsiveImage(previewImage, "(max-width: 760px) 100vw, 74vw")}
               alt=""
               className="pdp-hero-image is-active is-preview"
             />
@@ -236,7 +237,7 @@ export default function ProductPage() {
       <section className="pdp-glance" aria-label="At a glance">
         {[
           ["D-8", "RENET model"],
-          [isPreview ? "To be confirmed" : model.light, "Light signature"],
+          [model.light, "Light signature"],
           [colour.name, "Selected colour"],
           ["India", "Electric mobility"],
         ].map(([value, label], index) => (
@@ -281,7 +282,7 @@ export default function ProductPage() {
                     return (
                       <ShotImage
                         key={`preview-${option.id}-${view.id}`}
-                        view={{ ...view, src: option.preview.image }}
+                        view={{ ...view, src: option.previews[modelId] }}
                         alt={active ? `RENET D-8 in ${option.name} (digital colour preview) — ${view.label}` : ""}
                         className={active ? "is-active" : ""}
                         loading="lazy"
@@ -328,7 +329,7 @@ export default function ProductPage() {
             </div>
 
             <div className="pdp-thumbs" role="group" aria-label="Gallery views">
-              {model.gallery.map((view) => (
+              {galleryViews.map((view) => (
                 <button
                   type="button"
                   key={view.id}
@@ -358,7 +359,7 @@ export default function ProductPage() {
               {showsModelPhotos
                 ? model.category
                 : isPreview
-                  ? "Digital colour preview · details to be confirmed"
+                  ? `Digital colour preview · ${model.light} design`
                   : "Electric scooter · details to be confirmed"}
             </p>
 
@@ -368,7 +369,7 @@ export default function ProductPage() {
               {showsModelPhotos
                 ? model.description
                 : isPreview
-                  ? `A digital preview of the RENET D-8 in ${colour.name}, recoloured from the official D-8 White photo. The actual paint shade, finish and details may differ — the RENET team can confirm availability and show you the real colour.`
+                  ? `A digital preview of the ${model.light.toLowerCase()} D-8 in ${colour.name}, recoloured from the official ${model.name} photo. The actual paint shade, finish and painted areas may differ — the RENET team can confirm availability and show you the real colour.`
                   : `The RENET D-8 in ${colour.name}. Official photos of this colour are coming soon — the RENET team can confirm availability and details.`}
             </p>
             <p className="pdp-finish-note">Availability of each colour is confirmed by RENET.</p>
