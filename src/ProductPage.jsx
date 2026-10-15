@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from "reac
 import products, { D8_COLOURS, faqs, pendingSpecs, productOrder } from "./data/products";
 import { ENQUIRY_EMAIL, emailUrl, enquiryLink } from "./lib/enquiry";
 import useHeroParallax from "./hooks/useHeroParallax";
+import useZoomPan from "./hooks/useZoomPan";
 import { responsiveImage } from "./lib/images";
 import SiteHeader from "./components/SiteHeader";
 import SiteFooter from "./components/SiteFooter";
@@ -114,6 +115,41 @@ export default function ProductPage() {
   const heroRef = useRef(null);
   const [viewByModel, setViewByModel] = useState({});
   const [openFaq, setOpenFaq] = useState(0);
+
+  // Photo viewer: zoom/pan resets whenever the model, colour or view changes.
+  const viewerKey = `${modelId}|${searchParams.get("colour") ?? ""}|${viewByModel[modelId] ?? ""}`;
+  const { scale: zoomScale, stageRef, layerRef, zoomIn, zoomOut, reset: resetZoom, stageProps } = useZoomPan({ resetKey: viewerKey });
+  // Key of the view whose photo is still downloading (null when ready).
+  const [loadingKey, setLoadingKey] = useState(null);
+  const imageLoading = loadingKey === viewerKey;
+  const [fullscreen, setFullscreen] = useState(false);
+
+  // Loading state until the selected photo has decoded.
+  useEffect(() => {
+    const img = stageRef.current?.querySelector("img.pdp-shot.is-active");
+    if (!img || img.complete) return;
+    const frame = requestAnimationFrame(() => setLoadingKey(viewerKey));
+    const done = () => setLoadingKey(null);
+    img.addEventListener("load", done);
+    img.addEventListener("error", done);
+    return () => {
+      cancelAnimationFrame(frame);
+      img.removeEventListener("load", done);
+      img.removeEventListener("error", done);
+    };
+  }, [viewerKey, stageRef]);
+
+  // Fullscreen viewer: Escape closes, page scroll locked while open.
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (event) => event.key === "Escape" && setFullscreen(false);
+    document.addEventListener("keydown", onKey);
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.documentElement.style.overflow = "";
+    };
+  }, [fullscreen]);
   const model = products[modelId];
 
   useHeroParallax(heroRef);
@@ -259,7 +295,16 @@ export default function ProductPage() {
 
         <div className="pdp-gallery-layout">
           <div className="pdp-gallery-main" data-reveal="scale">
-            <div className="pdp-stage">
+            <div
+              ref={stageRef}
+              className={["pdp-stage", "pdp-viewer", zoomScale > 1 && "is-zoomed", fullscreen && "is-fullscreen", imageLoading && "is-loading"].filter(Boolean).join(" ")}
+              tabIndex={0}
+              role="group"
+              aria-roledescription="photo viewer"
+              aria-label={`${isPreview ? `D-8 ${colour.name} (digital colour preview)` : model.name} — ${activeView.label}. Use plus and minus to zoom, arrow keys to pan.`}
+              {...stageProps}
+            >
+              <div className="pdp-zoom-layer" ref={layerRef}>
               {stageLayers.map(({ slug, view, key }) => {
                 const active = showsModelPhotos && slug === modelId && view.id === activeView.id;
                 return (
@@ -314,6 +359,29 @@ export default function ProductPage() {
                 <strong>{colour.name}</strong>
                 <span>Official photo of the D-8 in {colour.name} coming soon</span>
               </div>
+              </div>
+
+              {imageLoading && <span className="pdp-viewer-loading" role="status">Loading photo…</span>}
+
+              {mode !== "pending" && (
+                <div className="pdp-viewer-controls" onPointerDown={(event) => event.stopPropagation()}>
+                  <button type="button" onClick={zoomOut} disabled={zoomScale <= 1.01} aria-label="Zoom out">−</button>
+                  <span aria-live="polite">{Math.round(zoomScale * 100)}%</span>
+                  <button type="button" onClick={zoomIn} disabled={zoomScale >= 2.99} aria-label="Zoom in">+</button>
+                  <button type="button" onClick={resetZoom} disabled={zoomScale <= 1.01} aria-label="Reset zoom">⟲</button>
+                  <button
+                    type="button"
+                    onClick={() => setFullscreen((open) => !open)}
+                    aria-label={fullscreen ? "Exit full screen" : "View full screen"}
+                    aria-pressed={fullscreen}
+                  >
+                    {fullscreen ? "✕" : "⤢"}
+                  </button>
+                </div>
+              )}
+              {mode !== "pending" && zoomScale <= 1.01 && (
+                <span className="pdp-viewer-hint" aria-hidden="true">Double-tap or pinch to zoom</span>
+              )}
 
               {/* The "coming soon" panel already names the colour */}
               {mode !== "pending" && (
@@ -374,9 +442,10 @@ export default function ProductPage() {
             </p>
             <p className="pdp-finish-note">Availability of each colour is confirmed by RENET.</p>
 
-            <a className="pdp-btn pdp-btn-dark" {...enquiry.linkProps}>
-              Enquire about the D-8 in {colour.name} <span aria-hidden="true">↗</span>
+            <a className="pdp-btn pdp-btn-primary pdp-colour-cta" {...enquiry.linkProps}>
+              Enquire about this colour <span aria-hidden="true">↗</span>
             </a>
+            <p className="pdp-finish-note pdp-cta-note">Your message will mention the D-8 in {colour.name}.</p>
           </aside>
         </div>
       </section>

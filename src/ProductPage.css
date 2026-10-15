@@ -1503,3 +1503,167 @@
     font-size: 9.5px;
   }
 }
+
+/* ---------- Photo viewer (zoom / pan / full screen) ---------- */
+
+.pdp-viewer {
+  touch-action: pan-y;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pdp-viewer:focus-visible {
+  box-shadow: 0 0 0 3px var(--pdp-green), 0 30px 60px rgba(13, 14, 12, 0.16);
+}
+
+.pdp-viewer.is-zoomed {
+  touch-action: none;
+  cursor: grab;
+}
+
+.pdp-viewer.is-zoomed:active {
+  cursor: grabbing;
+}
+
+.pdp-zoom-layer {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(var(--zoom-x, 0px), var(--zoom-y, 0px), 0) scale(var(--zoom-s, 1));
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.pdp-viewer-controls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(13, 14, 12, 0.66);
+  color: var(--pdp-cream);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.pdp-viewer-controls button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.pdp-viewer-controls button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pdp-viewer-controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pdp-viewer-controls span {
+  min-width: 46px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.pdp-viewer-hint {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  z-index: 2;
+  translate: -50% 0;
+  color: rgba(244, 243, 239, 0.7);
+  font-size: 11.5px;
+  letter-spacing: 0.4px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.pdp-viewer-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0) 70%) 0 0 / 200% 100%;
+  color: #b8beb0;
+  font-size: 13px;
+  animation: pdpShimmer 1.4s linear infinite;
+}
+
+@keyframes pdpShimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Full screen: the same stage, fixed over the page (no duplicate viewer) */
+.pdp-viewer.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  aspect-ratio: auto;
+  border-radius: 0;
+  background: #050605;
+}
+
+.pdp-viewer.is-fullscreen .pdp-shot {
+  object-fit: contain;
+}
+
+.pdp-colour-cta {
+  width: 100%;
+}
+
+.pdp-cta-note {
+  margin: 10px 0 0;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0.2px;
+}
+
+@media (max-width: 560px) {
+  .pdp-viewer-controls {
+    right: 8px;
+    bottom: 8px;
+  }
+
+  .pdp-viewer-controls button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .pdp-viewer-controls span {
+    display: none;
+  }
+
+  .pdp-viewer-hint {
+    display: none;
+  }
+
+  .pdp-stage-label {
+    max-width: 52%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdp-viewer-loading {
+    animation: none;
+  }
+}
