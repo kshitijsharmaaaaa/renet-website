@@ -6,18 +6,20 @@ services:
     name: renet-api
     runtime: node
     rootDir: server
-    # Starter is required for the persistent disk below (free instances lose
-    # files on every restart/deploy and sleep when idle).
-    plan: starter
+    # Free plan: sleeps after ~15 min idle (first request then takes ~30-60 s)
+    # and has no persistent disk, so the test-ride leads file is wiped on every
+    # restart/deploy. Set LEAD_WEBHOOK_URL so each lead is also sent elsewhere.
+    # To keep leads on Render instead: plan: starter + the disk block below.
+    plan: free
     region: singapore
     buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /api/health
     autoDeploy: true
-    disk:
-      name: renet-data
-      mountPath: /var/data
-      sizeGB: 1
+    # disk:            # paid plans only
+    #   name: renet-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: "22"
@@ -27,8 +29,8 @@ services:
         value: openai/gpt-oss-120b
       - key: ALLOWED_ORIGINS
         sync: false
-      - key: LEADS_FILE
-        value: /var/data/leads.jsonl
+      # - key: LEADS_FILE   # with the disk above: /var/data/leads.jsonl
+      #   value: /var/data/leads.jsonl
       - key: TRUST_PROXY
         value: "1"
       - key: ADMIN_TOKEN
